@@ -1,0 +1,336 @@
+---
+title: "Testing a Perceptual Phenomenon By Skandarajan Rajaratnam"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+## Information
+
+In a Stroop task, participants are presented with a list of words, with each word displayed in a color of ink. The participant's task is to say out loud the color of the ink in which the word is printed. The task has two conditions: a congruent words condition, and an incongruent words condition. In the congruent words condition, the words being displayed are color words whose names match the colors in which they are printed. In the incongruent words condition, the words displayed are color words whose names do not match the colors in which they are printed. In each case, we measure the time it takes to name the ink colors in equally-sized lists. Each participant will go through and record a time from each condition.
+
+In psychology, the Stroop effect is a demonstration of interference in the reaction time of a task. When the name of a color (e.g., "blue", "green", or "red") is printed in a color that is not denoted by the name (e.g., the word "red" printed in blue ink instead of red ink), naming the color of the word takes longer and is more prone to errors than when the color of the ink matches the name of the color.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+#install.packages('GGally')
+#install.packages('reshape')
+#install.packages('plyr')
+#install.packages("ggcorrplot")
+
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(gridExtra)
+```
+### 1. What is our independent variable? What is our dependent variable?
+
+The given data set "stroopdata.csv"" contains both an independent and dependent variable. 
+
+```{r echo=FALSE, Load_the_Data}
+
+setwd("C:\\Users\\Skanda\\Desktop\\DANDJ\\Statistics-P5")
+getwd()
+
+stroop <- read.csv("stroopdata.csv")
+
+str(stroop)
+
+View(stroop)
+
+summary(stroop)
+
+```
+
+        1. Independent Variable: Congruent words   -  The font color and word name are the same.
+   
+                                 Incongruent words -  The font color and word name are different.
+
+        2. Dependent Variable: Response time (seconds) - The amount of time it takes for the participant to indicate the color.
+
+
+### 2. What is an appropriate set of hypotheses for this task? What kind of statistical test do you expect to perform? Justify your choices.
+
+This is an Experimental Psychology entitled "Studies of interference in serial verbal reactions. A hypothesis test is used         to test a claim that someone has about how an observation may be different from the known population parameter.
+
+We do not know the mean and the standard deviation of the population. We have sample data for both the congruent and incongruent tests and sample size is n =24 (Less than < 30). The same participants are asked to perform the task under both the congruent and the incongruent words test. It is like a dependent t-test for paired samples, that is with-in subject designs with two conditions test. 
+
+I would expect to perform, Dependent-sample T-Test. 
+
+
+It would be a Two-tailed test.
+
+        . µC -  The mean of Response time for the participant group of Congruent Test
+        
+        . µI -  The mean of Response time for the participant group of Incongruent Test
+
+
+        Null Hypothesis(Ho): There is no significant difference in the population average response time in viewing the congruent words or viewing the incongruent words.
+        
+        Ho: µC - µI = 0,
+        
+        Alternative Hypothesis(Ha): There is a significant difference in the population average response time in viewing the congruent words or viewing the incongruent words. It can be positive or negative.
+        
+        Ha: µC - µI != 0 
+            µC - µI  > 0 
+            µC - µI  < 0 
+
+Although t-tests are quite robust, it is a good practice to evaluate the degree of deviation from these assumptions in order to assess the quality of the results. In a paired sample t-test, the observations are defined as the differences between two sets of values, and each assumption refers to these differences, not the original data values.
+
+The paired sample t-test has four main assumptions:
+
+        . The dependent variable must be continuous.
+
+        . The observations are independent of one another.
+
+        . The dependent variable should be approximately normally distributed.
+
+        . The dependent variable should not contain any outliers
+
+
+```{r echo=FALSE}
+
+congruent <- stroop$Congruent
+
+incongruent <- stroop$Incongruent
+
+summary(congruent)
+
+summary(incongruent)
+
+W1 <- qplot(data = stroop, x = Congruent , binwidth = 2.5,  color = I('black'), fill = I('#099DD9')) +
+        xlab('Congurent') +
+        ylab('Response Time')
+#W1
+
+W2 <- qplot(data = stroop, x = Incongruent , binwidth = 3.5,  color = I('black'), fill = I('#099DD9')) +
+        xlab('Incongurent') +
+        ylab('Response Time')
+#W2
+
+library(gridExtra)
+grid.arrange(W1, W2, ncol = 2)
+
+
+#we want to stack them into a single column 
+
+library(reshape2)
+
+stp <- melt(stroop, variable.name = "Congurency", value.name = "Response")
+
+head(stp)
+summary(stp)
+ggplot(aes( x=Congurency, y=Response), data = stp, fill = Congurency) + geom_boxplot(fill=c("brown", "orange")) + 
+        stat_summary(fun.y = "mean", geom = "point", shape = 4) +
+        ggtitle("STROOP EFFECT") + xlab("Congurency") +ylab("Response (s)")
+
+
+```
+
+Observed the dependent variables are approximately normally distributed.
+
+
+
+```{r echo=FALSE}
+
+stroop <- stroop %>%
+        mutate(difference = Incongruent - Congruent)
+
+#knitr::kable(stroop)
+
+# Calculate the mean, median and Sd of each group of data 
+options(digits = 3)
+Tendancy <- stroop %>%
+        summarise_each(funs(mean, median, sd), Congruent, Incongruent, difference)
+
+knitr::kable(Tendancy)
+
+IQR <- apply(stroop, 2, IQR)
+
+```
+
+
+### 3. Report some descriptive statistic regarding this dataset. Include at least one measure of central tendency and at least one measure of variability.
+
+Central Tendency:
+
+        1. In these results, the mean of congruent is 14.05 and the median 14.36. The data appear to be skewed to the right(negatively skewed), which explains why the mean is less than the median.
+
+        The Std dev is 3.559
+
+        2. In these results, the mean of incongruent is 22.02, and the median 21.02. The data appear to be skewed to the left(positively skewed), which explains why the mean is greater than the median. 
+
+        The Std dev 4.797
+
+        3. The difference of those group mean is 7.965, the median is 7.666.
+
+        The Std dev is 4.865
+
+Measure of Variability:
+
+The inter-quartile range is a measure that indicates the extent to which the central 50% of values within the data.
+
+        IQR:
+        Congruent      Incongruent   difference 
+        4.305          5.335         6.613 
+
+The standard deviation is a measure that summarises the amount by which every value within a dataset varies from the mean.
+Effectively it indicates how tightly the values in the dataset are bunched around the mean value.
+
+        Std Dev:
+        Congruent      Incongruent   difference
+        3.559          4.797         4.865
+        
+### 4. Provide one or two visualizations that show the distribution of the sample data. Write one or two sentences noting what you observe about the plot or plots.
+
+When we look at the plot. Slightly right skewed on Congurent and left skewd on Incongurent words test. Skewness is easiest to detect with a histogram.
+
+The congruent histogram with density curve shows a right skewed distribution. The sizes of the bins can misrepresent the shape of the normalized distribution curve. Few data above 20 sec, leads to the right skew. 
+
+The incongruent histogram with density curve shows a left skewed distribution. The histogram with Incongurent skewed data shows failure time data. A few items fail immediately. Also noticed outliers in the data set. Which is led to the distribution more into the skewed. 
+
+```{r echo=FALSE}
+
+p1 <- ggplot(data = stroop, aes(x = Congruent)) + 
+        geom_histogram(aes(y = ..density..),
+                       breaks = seq(5, 25, 2), alpha = .2, colour = "black", fill = "blue") + 
+        geom_density(col = 2) + 
+        ggtitle("Histogram with Density Curve for Congruent")
+
+p2 <- ggplot(data = stroop, aes(x = Incongruent)) + 
+        geom_histogram(aes(y = ..density..),
+                       breaks = seq(10, 40, 2), alpha = .2, colour = "black", fill = "blue") + 
+        geom_density(col = 2) + 
+        ggtitle("Histogram with Density Curve for Incongruent")
+
+grid.arrange(p1, p2, ncol = 2)
+
+# Pearson correlation coefficients, using pairwise observations 
+library(GGally)
+library(ggcorrplot)
+ggcorr(stroop[, 1:2], label = TRUE, method = c("pairwise", "pearson"))
+
+
+```
+
+
+I am using "ggcorr" function to visualize, that there is any correlation in response time viewing the congruent words and incongruent words. The correlation coefficient 0.4 summarizes the association between these two variables. 
+
+
+### 5. Now, perform the statistical test and report your results. What is your confidence level and your critical statistic value? Do you reject the null hypothesis or fail to reject it? Come to a conclusion in terms of the experiment task. Did the results match up with your expectations?
+
+        1. Dependent-Sample t-test
+
+        2. Sample size ,  n = 24
+
+        3. Direction - Two-tail t-test.
+
+        4. Alpha level = 0.05
+
+
+        Null Hypothesis (Ho): µC - µI = 0
+        
+        Alt.  Hypothesis (Ha): µC - µI != 0
+                            
+                              µC - µI  > 0
+                              
+                              µC - µI  < 0 
+
+Results:
+
+        1. Degree of Freedom = (24 - 1) = 23
+
+        2. Find a t-critical if  ?? = 0.05
+        
+        t-table https://s3.amazonaws.com/udacity-hosted-downloads/t-table.jpg
+
+                t-critical = ± 2.069
+
+        3. The standard deviation of the difference (S) = 4.865
+
+        4. Standard Error of the Mean(SEM) =  (4.865 / ????24) = 0.993
+
+        5. we should be taking the difference, The point estimate or
+        
+           Average of the differences(Md) = -7.965 
+
+        6. t-Statistical = Md / SEM
+
+                t-Stat = (-7.965 / 0.993) = -8.02
+        
+        7. Effect Size, Cohen's d = Md / Sd
+                          = -7.965 /4.865
+                          = -1.637
+        This tell us, those two means 1.64 Standard diveation apart.
+        
+   
+        8. Magin of Error for 95% CI 
+   
+        t-Critical x SEM = 2.069 x 0.993
+                         = 2.05
+
+        9 R-Squard (r^2) = (t^2)/(t^2 + DF)                  (t - t-Statistical)
+                   = (-8.02^2)/(-8.02^2 + 23)
+                   = 64.32 / (64.32 + 23)
+                   = .74
+
+        This tells us 74 % difference in those two words tests.
+
+        10. Confident Interval for Dependent Samples 
+                CI: Md ± t-Critical 
+                CI: Lower Limit = (-7.965 - 2.05) = -10.02
+                    Upper Limit = (-7.965 + 2.05) = -5.92
+       
+Summary: This is two-tailed test, Still t-Stistical value -8.02 pass the t-Critical value +/- 2.069. That mean the t-Statistical value in the t-Crtical region. Therefore we Reject the Null Hypothesis.
+
+```{r echo=FALSE}
+
+t.test(stroop$Congruent,stroop$Incongruent,paired = TRUE, alternative = "less")
+
+```
+
+        11. p-value = 2e-08, p < 0.05
+
+### Conclusion:
+
+        Report: t(23) = -8.02, p < 0.05, two-tailed
+        
+Based on the t-Stistical and the t-Critical, we reject the Null Hypothesis. There is a significance difference in response time for the congruent and incongruent words test. The t-statistics is equal to -8.02, which has passed the t-critical value (± 2.069). The p-value is close to  zero. This p-value = 2e-08, also meaning that there is no significance difference (No changes) in response time for the congruent and incongruent words test. Which is my expectation of the experiment.
+
+### 6. Optional: What do you think is responsible for the effects observed? Can you think of an alternative or similar task that would result in a similar effect? Some research about the problem will be helpful for thinking about these two questions!
+
+Stroop's effect test is showing clearly and definitively, that our embedded knowledge about our environment impacts how we interact with it. This simple and robust paradigm and the interference phenomenon that it demonstrates continue to provide valuable insights into the operation of cognitive processes.
+
+In Research: 
+
+The Stroop Effect: By Colin M. MacLeod, Department of Psychology, University of Waterloo, Waterloo, ON, Canada
+
+This remarkable phenomenon notably the anterior cingulate cortex and dorsolateral prefrontal cortex,
+both of which are active when resolving conflict. In the context of the Stroop task, the dorsolateral prefrontal
+cortex appears to be involved in the relevant executive functions, particularly in maintaining response set
+(to name the color, not to read the word), whereas the anterior cingulate cortex plays a central role in selecting
+the appropriate response and evaluating its accuracy.
+
+This simple and robust paradigm and the interference phenomenon that it demonstrates continue to provide valuable insights into the operation of cognitive processes.
+
+Similar Task:
+
+The best is the picture-word interference task, in which a conflicting word is embedded in a picture. Naming the picture shows interference from the word, but reading the word is hardly influenced by the picture.
+
+### References:
+
+https://classroom.udacity.com/courses/ud134-nd
+
+http://www.statisticssolutions.com/
+
+https://en.wikipedia.org/wiki/Stroop_effect#Experiment
+
+https://faculty.washington.edu/chudler/java/ready.html
+
+https://faculty.washington.edu/chudler/words.html#seffect
+
+http://seas.umich.edu/eplab/demos/st0/stroopdesc.html
+
+http://www.rpubs.com/zxia924/stroopeffect
+
+https://imotions.com/blog/the-stroop-effect/
+
